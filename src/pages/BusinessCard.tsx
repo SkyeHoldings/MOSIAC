@@ -21,7 +21,7 @@ const CARD: CardProfile = {
   title: 'Founder',
   organization: 'MOSAIC AI',
   tagline: 'Marketing & AI systems for the Inland Northwest',
-  email: 'hello@hellomosaic.ai',
+  email: 'skye@marketingbymosaic.com',
   phone: '',
   website: 'https://hellomosaic.ai/',
   linkedin: '',
