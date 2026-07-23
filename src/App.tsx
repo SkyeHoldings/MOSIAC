@@ -4,6 +4,7 @@ import { Footer } from './components/Footer'
 import { Header } from './components/Header'
 import { BusinessCard } from './pages/BusinessCard'
 import { Home } from './pages/Home'
+import { OneSheet } from './pages/OneSheet'
 import { WorkDetail } from './pages/WorkDetail'
 
 function ScrollToTop() {
@@ -26,23 +27,24 @@ function ScrollToTop() {
 
 export default function App() {
   const { pathname } = useLocation()
-  const isBusinessCardPage = pathname === '/businesscard'
+  const isStandalonePage = pathname === '/businesscard' || pathname === '/onesheet'
 
   return (
     <div className="site-shell">
       <ScrollToTop />
-      {!isBusinessCardPage && <Header />}
-      <main className={`site-main${isBusinessCardPage ? ' site-main--flush' : ''}`}>
+      {!isStandalonePage && <Header />}
+      <main className={`site-main${isStandalonePage ? ' site-main--flush' : ''}`}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/businesscard" element={<BusinessCard />} />
+          <Route path="/onesheet" element={<OneSheet />} />
           <Route path="/work/:id" element={<WorkDetail />} />
           <Route path="/expertise" element={<Navigate to={{ pathname: '/', hash: 'how-we-work' }} replace />} />
           <Route path="/contact" element={<Navigate to={{ pathname: '/', hash: 'contact' }} replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      {!isBusinessCardPage && <Footer />}
+      {!isStandalonePage && <Footer />}
     </div>
   )
 }
