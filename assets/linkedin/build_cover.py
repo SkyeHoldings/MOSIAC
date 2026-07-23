@@ -1,4 +1,4 @@
-"""Build Mosaic LinkedIn Page cover at exact 4200x700 (6:1)."""
+"""LinkedIn Page cover — home-slide layout with native digital visual."""
 
 from __future__ import annotations
 
@@ -7,21 +7,20 @@ import os
 import random
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 ROOT = Path(__file__).resolve().parent
-SOURCE = Path(
-    r"C:\Users\skyes\.cursor\projects\c-Users-skyes-Projects-understory-marketing-site"
-    r"\assets\mosaic-linkedin-cover-source.png"
-)
 OUT = ROOT / "mosaic-linkedin-page-cover-4200x700.png"
 PREVIEW = ROOT / "mosaic-linkedin-page-cover-preview.png"
+ARMATA = ROOT / "fonts" / "Armata-Regular.ttf"
 
 W, H = 4200, 700
-INK = (13, 13, 13)
-MUTED = (100, 100, 100)
+SPLIT = int(W * (1.05 / 2.0))
+MINT = (232, 232, 232)
+INK = (17, 17, 17)
+MUTED = (55, 55, 55)
+WHITE = (255, 255, 255)
 
-# Mosaic barcode bars from MosaicLogo.tsx (viewBox 0 0 168 30)
 BARS = [
     (0, 3),
     (6, 2),
@@ -62,136 +61,250 @@ def load_font(candidates: list[str], size: int) -> ImageFont.FreeTypeFont | Imag
     return ImageFont.load_default()
 
 
-def mist_field(width: int, height: int, sample: Image.Image) -> Image.Image:
-    """Soft panoramic mist from a photo sample (no typography)."""
-    edge = sample.resize((max(64, sample.width // 8), height), Image.Resampling.BILINEAR)
-    mist = edge.resize((width, height), Image.Resampling.BILINEAR)
-    mist = mist.filter(ImageFilter.GaussianBlur(radius=56))
-    px = mist.load()
-    random.seed(11)
-    for y in range(height):
-        for x in range(width):
-            r, g, b = px[x, y]
-            wave = int(10 * math.sin(x * 0.0018 + y * 0.012))
-            lift = int(18 * (1 - abs((x / max(1, width - 1)) - 0.35)))
-            n = random.randint(-5, 5)
-            px[x, y] = (
-                max(0, min(255, r + wave + lift + n)),
-                max(0, min(255, g + int(wave * 0.8) + lift + n)),
-                max(0, min(255, b + int(wave * 0.5) + lift + n)),
-            )
-    return mist
+def seeded_random(seed: int):
+    s = seed
+
+    def rand() -> float:
+        nonlocal s
+        s = (s * 16807) % 2147483647
+        return (s - 1) / 2147483646
+
+    return rand
 
 
-def build_base(src: Image.Image) -> Image.Image:
-    src = src.convert("RGB")
-    # Keep only mountain photography — discard source typography (left ~55%)
-    photo = src.crop((int(src.width * 0.58), 0, src.width, src.height))
-    # Extra safety: blur any residual glyphs on the photo's left edge
-    edge = photo.crop((0, 0, min(90, photo.width), photo.height)).filter(
-        ImageFilter.GaussianBlur(radius=12)
-    )
-    photo.paste(edge, (0, 0))
+def render_digital_panel(width: int, height: int, t: float = 2.4) -> Image.Image:
+    """Native DigitalEarth-style frame sized for the banner — not a screenshot crop."""
+    rand = seeded_random(42)
+    streaks = []
+    for _ in range(520):
+        x = 0.02 + rand() * 0.96
+        center = abs(x - 0.52)
+        streaks.append(
+            {
+                "x": x,
+                "h": min(0.98, (0.4 + rand() * 0.58) * (1.2 - center * 0.9)),
+                "w": 0.45 + rand() * 1.4 if center > 0.1 else 0.9 + rand() * 2.8,
+                "b": (0.18 + rand() * 0.75) * (1.15 - center * 0.7),
+                "speed": 0.06 + rand() * 0.28,
+                "phase": rand() * math.pi * 2,
+            }
+        )
+    for _ in range(40):
+        streaks.append(
+            {
+                "x": 0.5 + (rand() - 0.5) * 0.09,
+                "h": 0.78 + rand() * 0.2,
+                "w": 1.2 + rand() * 4.5,
+                "b": 0.8 + rand() * 0.2,
+                "speed": 0.04 + rand() * 0.14,
+                "phase": rand() * math.pi * 2,
+            }
+        )
 
-    scale = H / photo.height
-    photo = photo.resize((max(1, int(photo.width * scale)), H), Image.Resampling.LANCZOS)
+    particles = [
+        {
+            "x": 0.05 + rand() * 0.9,
+            "y": 0.04 + rand() * 0.5,
+            "r": 0.6 + rand() * 1.8,
+            "b": 0.35 + rand() * 0.6,
+            "drift": 0.01 + rand() * 0.03,
+            "phase": rand() * math.pi * 2,
+        }
+        for _ in range(140)
+    ]
+    tiles = [
+        {"lane": (i * 0.173) % 1, "phase": rand(), "w": 0.35 + rand() * 0.8}
+        for i in range(36)
+    ]
 
-    # Mist plate across full banner from foggiest strip of photo
-    fog_sample = photo.crop((0, 0, min(180, photo.width), H))
-    canvas = mist_field(W, H, fog_sample)
+    # Render at 2x then downscale for clean anti-alias
+    scale = 2
+    rw, rh = width * scale, height * scale
+    img = Image.new("RGB", (rw, rh), (5, 7, 10))
+    draw = ImageDraw.Draw(img, "RGBA")
 
-    # Anchor mountains on the far right with a soft left fade into mist
-    x = W - photo.width + int(W * 0.02)
-    photo_rgba = photo.convert("RGBA")
-    fade_w = min(640, max(1, photo.width * 2 // 3))
-    alpha = Image.new("L", (photo.width, H), 255)
-    ad = ImageDraw.Draw(alpha)
-    for i in range(fade_w):
-        a = int(255 * (i / fade_w) ** 1.25)
-        ad.line([(i, 0), (i, H)], fill=a)
-    photo_rgba.putalpha(alpha)
+    horizon = rh * 0.58
+    vanish_x = rw * 0.52
 
-    out = canvas.convert("RGBA")
-    out.alpha_composite(photo_rgba, (x, 0))
-    return out.convert("RGB")
+    # Sky lift
+    for y in range(int(horizon)):
+        a = int(40 * (y / max(1, horizon)))
+        draw.line([(0, y), (rw, y)], fill=(40, 40, 40, a))
+
+    # Floor
+    draw.rectangle([0, int(horizon), rw, rh], fill=(7, 11, 16, 255))
+
+    # Perspective horizontals
+    for i in range(1, 27):
+        u = i / 26
+        y = horizon + (rh - horizon) * (u**1.65)
+        a = int(255 * (0.08 + 0.28 * (1 - u)))
+        draw.line([(0, y), (rw, y)], fill=(220, 220, 220, a))
+
+    # Perspective verticals
+    for i in range(-22, 23):
+        x0 = vanish_x + i * rw * 0.048
+        a = int(255 * (0.06 + 0.2 * (1 - abs(i) / 22)))
+        draw.line([(vanish_x, horizon), (x0, rh)], fill=(200, 200, 200, a))
+
+    # Floor tiles
+    for tile in tiles:
+        depth = (tile["phase"] + t * 0.08) % 1
+        y = horizon + (rh - horizon) * (depth**1.45)
+        span = (18 + depth * 90) * tile["w"] * scale
+        cx = vanish_x + math.sin(tile["lane"] * math.pi * 2 + t * 0.35) * rw * 0.3 * depth
+        glow = 0.12 + 0.45 * depth
+        a = int(255 * glow)
+        draw.rectangle(
+            [cx - span, y - span * 0.2, cx + span, y + span * 0.2],
+            fill=(245, 245, 245, a),
+        )
+
+    # Horizon node lights
+    for i in range(48):
+        x = rw * (0.06 + 0.88 * ((i * 0.137) % 1))
+        y = horizon + 6 * scale + (i % 6) * 9 * scale
+        pulse = 0.5 + 0.5 * math.sin(t * 2.1 + i)
+        r = (1.2 + pulse * 2) * scale
+        a = int(255 * (0.35 + 0.55 * pulse))
+        draw.ellipse([x - r, y - r, x + r, y + r], fill=(255, 255, 255, a))
+
+    # Vertical streaks — draw on a separate layer for soft glow
+    streak_layer = Image.new("RGBA", (rw, rh), (0, 0, 0, 0))
+    sd = ImageDraw.Draw(streak_layer)
+    for s in streaks:
+        pulse = 0.62 + 0.38 * math.sin(t * s["speed"] * math.pi * 2 + s["phase"])
+        h = horizon * s["h"] * pulse
+        x = s["x"] * rw
+        top = horizon - h
+        b = min(1.0, s["b"] * pulse)
+        w = max(0.7, s["w"]) * scale
+
+        if s["w"] >= 2:
+            glow_w = (s["w"] + 5) * scale
+            a = int(255 * 0.1 * b)
+            sd.line([(x, top + h * 0.1), (x, horizon)], fill=(255, 255, 255, a), width=int(glow_w))
+
+        a = int(255 * (0.55 + 0.45 * b))
+        sd.line([(x, top), (x, horizon)], fill=(255, 255, 255, a), width=max(1, int(w)))
+
+    img = Image.alpha_composite(img.convert("RGBA"), streak_layer)
+
+    # Central bloom
+    bloom = Image.new("RGBA", (rw, rh), (0, 0, 0, 0))
+    bd = ImageDraw.Draw(bloom)
+    bloom_x = rw * 0.52
+    for i in range(28, 0, -1):
+        rad = (rw * 0.12) * (i / 28)
+        a = int(100 * (1 - i / 28) ** 1.4)
+        bd.ellipse(
+            [bloom_x - rad, horizon - rad * 0.55, bloom_x + rad, horizon + rad * 0.55],
+            fill=(255, 255, 255, a),
+        )
+    bloom = bloom.filter(ImageFilter.GaussianBlur(radius=18 * scale / 2))
+    img = Image.alpha_composite(img, bloom)
+
+    # Particles
+    pd_layer = Image.new("RGBA", (rw, rh), (0, 0, 0, 0))
+    pd = ImageDraw.Draw(pd_layer)
+    for p in particles:
+        x = (p["x"] + 0.012 * math.sin(t * p["drift"] * 10 + p["phase"])) * rw
+        y = (p["y"] + 0.014 * math.sin(t * 0.7 + p["phase"])) * horizon
+        a = p["b"] * (0.65 + 0.35 * math.sin(t * 2 + p["phase"]))
+        r = p["r"] * scale
+        pd.ellipse([x - r, y - r, x + r, y + r], fill=(245, 248, 255, int(255 * a)))
+    img = Image.alpha_composite(img, pd_layer)
+
+    # Vignette
+    vig = Image.new("RGBA", (rw, rh), (0, 0, 0, 0))
+    vd = ImageDraw.Draw(vig)
+    cx, cy = rw * 0.5, rh * 0.45
+    max_r = rh * 0.85
+    for i in range(40):
+        rad = max_r * (i + 1) / 40
+        # only outer ring gets alpha
+        a = int(140 * ((i + 1) / 40) ** 2.2)
+        vd.ellipse([cx - rad, cy - rad, cx + rad, cy + rad], outline=(0, 0, 0, a), width=int(max_r / 40) + 2)
+    vig = vig.filter(ImageFilter.GaussianBlur(radius=30))
+    # stronger edge vignette via radial mask
+    edge = Image.new("L", (rw, rh), 0)
+    ed = ImageDraw.Draw(edge)
+    for i in range(60, 0, -1):
+        radx = (rw * 0.75) * (i / 60)
+        rady = (rh * 0.85) * (i / 60)
+        val = int(255 * (1 - (i / 60) ** 1.8) * 0.55)
+        ed.ellipse([cx - radx, cy - rady, cx + radx, cy + rady], fill=val)
+    black = Image.new("RGBA", (rw, rh), (0, 0, 0, 255))
+    black.putalpha(edge)
+    img = Image.alpha_composite(img, black)
+
+    out = img.convert("RGB").resize((width, height), Image.Resampling.LANCZOS)
+    return out
 
 
-def draw_brand(canvas: Image.Image) -> Image.Image:
-    img = canvas.convert("RGBA")
-    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
-    draw = ImageDraw.Draw(layer)
-
-    # Clear of LinkedIn page logo overlay (bottom-left circle)
-    brand_left = int(W * 0.095)
-    brand_top = int(H * 0.16)
-    barcode_w = 720
-    scale = barcode_w / VB_W
-    barcode_h = int(barcode_w * (30 / 168) * 1.28)
-
+def draw_logo(draw: ImageDraw.ImageDraw, left: int, top: int, width: int, word_size: int) -> int:
+    scale = width / VB_W
+    barcode_h = int(width * (30 / 168) * 1.25)
     for bx, bw in BARS:
-        x0 = brand_left + int(bx * scale)
-        x1 = brand_left + int((bx + bw) * scale)
-        draw.rectangle([x0, brand_top, x1, brand_top + barcode_h], fill=(*INK, 255))
+        x0 = left + int(bx * scale)
+        x1 = left + int((bx + bw) * scale)
+        draw.rectangle([x0, top, x1, top + barcode_h], fill=INK)
 
-    word_font = load_font([r"C:\Windows\Fonts\arial.ttf", r"C:\Windows\Fonts\segoeui.ttf"], 58)
-    ai_font = load_font([r"C:\Windows\Fonts\arial.ttf", r"C:\Windows\Fonts\segoeui.ttf"], 30)
-    tag_font = load_font(
-        [r"C:\Windows\Fonts\GARA.TTF", r"C:\Windows\Fonts\georgia.ttf", r"C:\Windows\Fonts\times.ttf"],
-        46,
+    word_font = load_font(
+        [str(ARMATA), r"C:\Windows\Fonts\arial.ttf", r"C:\Windows\Fonts\segoeui.ttf"],
+        word_size,
     )
-    url_font = load_font([r"C:\Windows\Fonts\arial.ttf", r"C:\Windows\Fonts\segoeui.ttf"], 24)
-
     letters = list("MOSAIC")
-    gap_top = brand_top + barcode_h + 24
-    letter_ws = []
+    gap_top = top + barcode_h + 16
+    widths = []
     for ch in letters:
         b = draw.textbbox((0, 0), ch, font=word_font)
-        letter_ws.append(b[2] - b[0])
-    total = sum(letter_ws)
-    space = (barcode_w - total) / (len(letters) - 1)
-    x = float(brand_left)
+        widths.append(b[2] - b[0])
+    space = (width - sum(widths)) / (len(letters) - 1)
+    x = float(left)
     for i, ch in enumerate(letters):
-        draw.text((x, gap_top), ch, font=word_font, fill=(*INK, 255))
-        x += letter_ws[i] + space
+        draw.text((x, gap_top), ch, font=word_font, fill=INK)
+        x += widths[i] + space
+    return gap_top + word_size + 8
 
-    ai_x = brand_left + barcode_w + 16
-    ai_y = gap_top + 16
-    draw.text((ai_x, ai_y), "AI", font=ai_font, fill=(*INK, 210))
 
-    tagline = "Ready to reshape your future?"
-    tag_y = gap_top + 92
-    draw.text((brand_left, tag_y), tagline, font=tag_font, fill=(*INK, 255))
+def build() -> Image.Image:
+    right_w = W - SPLIT
+    right = render_digital_panel(right_w, H)
 
-    url_y = tag_y + 68
-    draw.text((brand_left, url_y), "hellomosaic.ai", font=url_font, fill=(*MUTED, 255))
+    canvas = Image.new("RGB", (W, H), MINT)
+    canvas.paste(right, (SPLIT, 0))
+    draw = ImageDraw.Draw(canvas)
 
-    # Soft scrim for legibility — no hard card edge
-    tag_w = draw.textbbox((0, 0), tagline, font=tag_font)[2]
-    block_w = max(barcode_w + 90, tag_w + 8)
-    pad_x, pad_y = 56, 44
-    scrim = Image.new("RGBA", img.size, (0, 0, 0, 0))
-    sd = ImageDraw.Draw(scrim)
-    sd.ellipse(
-        [
-            brand_left - pad_x,
-            brand_top - pad_y,
-            brand_left + block_w + pad_x * 2,
-            url_y + 50 + pad_y,
-        ],
-        fill=(250, 250, 248, 165),
+    pad_l = int(SPLIT * 0.09)
+    logo_w = 420
+    h1_font = load_font(
+        [str(ARMATA), r"C:\Windows\Fonts\arial.ttf", r"C:\Windows\Fonts\segoeui.ttf"],
+        96,
     )
-    scrim = scrim.filter(ImageFilter.GaussianBlur(radius=34))
 
-    out = Image.alpha_composite(img, scrim)
-    out = Image.alpha_composite(out, layer)
-    return out.convert("RGB")
+    line1, line2 = "Ready to reshape", "your future?"
+    l1 = draw.textbbox((0, 0), line1, font=h1_font)
+    l2 = draw.textbbox((0, 0), line2, font=h1_font)
+    h1_line = (l1[3] - l1[1]) + 10
+    headline_h = h1_line * 2
+
+    # Vertically center logo + headline as one stack on the left panel
+    logo_word = 44
+    logo_block_h = int(logo_w * (30 / 168) * 1.25) + 16 + logo_word + 8
+    stack_h = logo_block_h + 48 + headline_h
+    stack_top = max(int((H - stack_h) / 2), 48)
+
+    logo_bottom = draw_logo(draw, pad_l, stack_top, logo_w, logo_word)
+    h1_y = logo_bottom + 48
+    draw.text((pad_l, h1_y), line1, font=h1_font, fill=INK)
+    draw.text((pad_l, h1_y + h1_line), line2, font=h1_font, fill=INK)
+
+    return canvas
 
 
 def main() -> None:
-    if not SOURCE.exists():
-        raise SystemExit(f"Missing source image: {SOURCE}")
-
-    final = draw_brand(build_base(Image.open(SOURCE)))
+    final = build()
     assert final.size == (W, H)
     OUT.parent.mkdir(parents=True, exist_ok=True)
     final.save(OUT, "PNG", optimize=True)
