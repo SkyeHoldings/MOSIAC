@@ -48,20 +48,23 @@ function IconContent() {
     <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
       <rect
         x="3.5"
-        y="3.5"
+        y="4.5"
         width="13"
-        height="13"
-        rx="2.5"
+        height="11"
+        rx="2"
         fill="none"
         stroke="currentColor"
         strokeWidth="1.5"
       />
       <path
-        d="M6.5 8h7M6.5 10.5h7M6.5 13h4.5"
+        d="M5.8 13.2 8.4 10l2.1 2.1 1.5-1.6 2.2 2.7"
+        fill="none"
         stroke="currentColor"
         strokeWidth="1.5"
         strokeLinecap="round"
+        strokeLinejoin="round"
       />
+      <circle cx="7.2" cy="7.6" r="1.1" fill="currentColor" />
     </svg>
   )
 }
@@ -178,39 +181,58 @@ function AgentsScene() {
 function SearchScene() {
   return (
     <div className="fx-scene fx-scene--search">
+      <div className="fx-research-glow" aria-hidden="true" />
+      <div className="fx-research-glow fx-research-glow--soft" aria-hidden="true" />
+
       <article className="fx-mock fx-mock--wide fx-mock--research">
         <header className="fx-mock__head">
           <div>
             <p className="fx-mock__eyebrow">Market research</p>
-            <h3 className="fx-mock__title">Signal scan</h3>
+            <h3 className="fx-mock__title">Your market, mapped</h3>
           </div>
           <div className="fx-research__live" aria-hidden="true">
             <span className="fx-research__pulse" />
-            Live
+            Live scan
           </div>
         </header>
 
         <div className="fx-searchbar fx-searchbar--scan" aria-hidden="true">
           <span className="fx-searchbar__icon" />
           <span className="fx-searchbar__scanline" />
+          <span className="fx-searchbar__hint">Scanning your category…</span>
           <kbd>⌘K</kbd>
+        </div>
+
+        <div className="fx-research-findings" aria-hidden="true">
+          <span>Audience signals</span>
+          <span>Demand pockets</span>
+          <span>Creative gaps</span>
         </div>
 
         <div className="fx-research-grid" aria-hidden="true">
           <div className="fx-research-card fx-research-card--map is-hot">
-            <span className="fx-research-card__label">Demand</span>
+            <span className="fx-research-card__label">Competitive landscape</span>
             <div className="fx-research-map">
+              <span className="fx-research-map__beam" />
+              <svg className="fx-research-map__links" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <path d="M30 22 L64 44" />
+                <path d="M64 44 L40 70" />
+                <path d="M30 22 L78 30" />
+                <path d="M40 70 L64 44" />
+              </svg>
               <span className="fx-research-map__node is-a" />
               <span className="fx-research-map__node is-b" />
               <span className="fx-research-map__node is-c" />
               <span className="fx-research-map__node is-d" />
               <span className="fx-research-map__ring" />
               <span className="fx-research-map__ring is-delay" />
+              <span className="fx-research-map__tag is-1">You</span>
+              <span className="fx-research-map__tag is-2">Whitespace</span>
             </div>
           </div>
 
           <div className="fx-research-card fx-research-card--wave">
-            <span className="fx-research-card__label">Momentum</span>
+            <span className="fx-research-card__label">Category momentum</span>
             <div className="fx-research-bars">
               <span style={{ ['--h' as string]: '42%' }} />
               <span style={{ ['--h' as string]: '68%' }} />
@@ -222,18 +244,8 @@ function SearchScene() {
             </div>
           </div>
 
-          <div className="fx-research-card fx-research-card--radar">
-            <span className="fx-research-card__label">Share</span>
-            <div className="fx-research-radar">
-              <span className="fx-research-radar__sweep" />
-              <span className="fx-research-radar__dot is-1" />
-              <span className="fx-research-radar__dot is-2" />
-              <span className="fx-research-radar__dot is-3" />
-            </div>
-          </div>
-
           <div className="fx-research-card fx-research-card--spark">
-            <span className="fx-research-card__label">Trend</span>
+            <span className="fx-research-card__label">Interest over time</span>
             <svg
               className="fx-research-spark"
               viewBox="0 0 160 64"
@@ -248,10 +260,45 @@ function SearchScene() {
                 className="fx-research-spark__line"
                 d="M0 52 C18 48 28 40 42 38 C58 36 66 46 80 34 C96 20 108 16 124 22 C138 26 148 18 160 12"
               />
+              <circle className="fx-research-spark__tip" cx="160" cy="12" r="3.5" />
             </svg>
+          </div>
+
+          <div className="fx-research-card fx-research-card--radar">
+            <span className="fx-research-card__label">Share of voice</span>
+            <div className="fx-research-radar">
+              <span className="fx-research-radar__sweep" />
+              <span className="fx-research-radar__dot is-1" />
+              <span className="fx-research-radar__dot is-2" />
+              <span className="fx-research-radar__dot is-3" />
+            </div>
           </div>
         </div>
       </article>
+
+      <aside className="fx-chat fx-chat--research" aria-label="Example research conversation">
+        <div className="fx-chat__row">
+          <span className="fx-chat__avatar fx-chat__avatar--user" aria-hidden="true">
+            J
+          </span>
+          <div>
+            <strong>Jordan</strong>
+            <p>Where should we focus first?</p>
+          </div>
+        </div>
+        <div className="fx-chat__row">
+          <span className="fx-chat__avatar fx-chat__avatar--agent" aria-hidden="true">
+            ✦
+          </span>
+          <div>
+            <strong>MOSAIC Agent</strong>
+            <p>
+              Weekend outdoor shoppers look open — here’s who to reach, where to play, and what to
+              say next.
+            </p>
+          </div>
+        </div>
+      </aside>
     </div>
   )
 }
@@ -259,49 +306,119 @@ function SearchScene() {
 function ContentScene() {
   return (
     <div className="fx-scene fx-scene--content">
-      <article className="fx-mock fx-mock--editor">
+      <article className="fx-mock fx-mock--editor fx-mock--atelier">
         <header className="fx-mock__head">
           <div>
-            <p className="fx-mock__eyebrow">Campaign draft · Harbor</p>
-            <h3 className="fx-mock__title">Content studio</h3>
+            <p className="fx-mock__eyebrow">Brand brief · Trail &amp; Timber</p>
+            <h3 className="fx-mock__title">Creative brief</h3>
           </div>
-          <div className="fx-mock__badge fx-mock__badge--mint">Drafting</div>
+          <div className="fx-mock__badge fx-mock__badge--mint">In review</div>
         </header>
 
-        <div className="fx-editor">
-          <p className="fx-editor__eyebrow">Headline options</p>
-          <h4>Research that writes itself — without sounding automated.</h4>
-          <p>
-            A content system trained on Harbor’s voice. Draft, score, and publish with
-            human taste in the loop.
-          </p>
-          <div className="fx-editor__chips" aria-hidden="true">
-            <span>Rewrite warmer</span>
-            <span>Shorten for paid</span>
-            <span>Match brand bible</span>
+        <div className="fx-brief-meta" aria-hidden="true">
+          <div>
+            <span>Industry</span>
+            <strong>Outdoor retail</strong>
+          </div>
+          <div>
+            <span>Look</span>
+            <strong>Lived-in, elevated</strong>
+          </div>
+          <div>
+            <span>Season</span>
+            <strong>Fall campaign</strong>
           </div>
         </div>
 
-        <div className="fx-editor-rail" aria-hidden="true">
-          <div>
-            <span>Voice match</span>
-            <strong>94</strong>
+        <div className="fx-brief-crew" aria-hidden="true">
+          <div className="fx-brief-crew__label">
+            <span>Creative team</span>
+            <em>Matched to category</em>
           </div>
-          <div>
-            <span>Clarity</span>
-            <strong>88</strong>
+          <ul className="fx-brief-crew__list">
+            <li className="is-selected">
+              <span className="fx-cast__avatar fx-cast__avatar--maya">MC</span>
+              <div>
+                <strong>Maya Chen</strong>
+                <span>Lead photo</span>
+              </div>
+            </li>
+            <li>
+              <span className="fx-cast__avatar fx-cast__avatar--rio">RS</span>
+              <div>
+                <strong>Rio Santos</strong>
+                <span>Illustration</span>
+              </div>
+            </li>
+            <li>
+              <span className="fx-cast__avatar fx-cast__avatar--jules">JK</span>
+              <div>
+                <strong>Jules Kim</strong>
+                <span>Motion</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div className="fx-atelier">
+          <div className="fx-mood" aria-hidden="true">
+            <p className="fx-mood__label">Mood board</p>
+            <div className="fx-mood__grid">
+              <div className="fx-mood__cell fx-mood__cell--hero">
+                <span className="fx-mood__sky" />
+                <span className="fx-mood__ridge" />
+                <span className="fx-mood__ridge fx-mood__ridge--near" />
+                <span className="fx-mood__tag">Key visual</span>
+              </div>
+              <div className="fx-mood__cell fx-mood__cell--swatch">
+                <i />
+                <i />
+                <i />
+                <i />
+              </div>
+              <div className="fx-mood__cell fx-mood__cell--type">
+                <span>Aa</span>
+                <em>Trail display</em>
+              </div>
+              <div className="fx-mood__cell fx-mood__cell--light">
+                <span>Light</span>
+                <em>Golden hour</em>
+              </div>
+              <div className="fx-mood__cell fx-mood__cell--material">
+                <span>Materials</span>
+                <em>Canvas · timber</em>
+              </div>
+            </div>
           </div>
-          <div>
-            <span>CTA strength</span>
-            <strong>91</strong>
+
+          <div className="fx-brief-body">
+            <div>
+              <span>Objective</span>
+              <p>
+                A visual system that feels trail-ready and premium — distinctive in outdoor
+                retail, never stock.
+              </p>
+            </div>
+            <div>
+              <span>Direction</span>
+              <p>
+                Natural light, grounded palette, product in place. Local artists own the
+                stills, marks, and motion.
+              </p>
+            </div>
+            <div>
+              <span>Guardrails</span>
+              <p>No glossy lifestyle tropes. No generic stock trails. Keep craft front and center.</p>
+            </div>
           </div>
+        </div>
+
+        <div className="fx-cast-tags" aria-hidden="true">
+          <span>Product stills</span>
+          <span>Location day</span>
+          <span>Brand film</span>
         </div>
       </article>
-
-      <div className="fx-float-note" aria-hidden="true">
-        <strong>Studio score</strong>
-        <span>94 · on-voice</span>
-      </div>
     </div>
   )
 }

@@ -68,20 +68,6 @@ export function ContactSection() {
             create marketing and AI systems that bring clarity, consistency, and
             room to grow — without the noise.
           </p>
-          <a
-            className="contact-partner"
-            href="https://cdachamber.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <span className="contact-partner-label">Proud Member of</span>
-            <img
-              src="/partners/cda-chamber.png?v=5"
-              alt="Coeur d'Alene Regional Chamber"
-              width={220}
-              height={132}
-            />
-          </a>
         </div>
 
         {state.succeeded ? (

@@ -6,22 +6,29 @@ export function Footer() {
     <footer className="site-footer">
       <div className="footer-grid">
         <div className="footer-brand">
+          <a
+            className="footer-partner"
+            href="https://cdachamber.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span className="footer-partner-label">Proud Member of</span>
+            <img
+              src="/partners/cda-chamber-light.png"
+              alt="Coeur d'Alene Regional Chamber"
+              width={220}
+              height={132}
+            />
+          </a>
+        </div>
+
+        <div className="footer-col footer-about">
+          <h4>About Us</h4>
           <p>
-            An AI marketing studio in the Pacific Northwest. The future,
-            carefully made.
+            Based in Coeur d&apos;Alene, MOSAIC partners with Inland Northwest
+            business owners to shape marketing and AI systems that feel grounded —
+            practical, consistent, and built for the long haul.
           </p>
-        </div>
-
-        <div className="footer-col">
-          <h4>Explore</h4>
-          <a href="/#how-we-work">How we work</a>
-          <a href="/#contact">Contact</a>
-        </div>
-
-        <div className="footer-col">
-          <h4>Studio</h4>
-          <p>Pacific Northwest</p>
-          <a href="mailto:hello@understory.studio">hello@understory.studio</a>
         </div>
       </div>
 
